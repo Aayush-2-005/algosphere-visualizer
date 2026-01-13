@@ -7,16 +7,27 @@ import { Slider } from '@/components/ui/slider';
 import {
   linearSearch,
   binarySearch,
+  jumpSearch,
+  exponentialSearch,
+  ternarySearch,
   SearchStep,
 } from '@/algorithms/searchingAlgorithms';
 
-type SearchAlgorithm = 'linear' | 'binary';
+type SearchAlgorithm = 'linear' | 'binary' | 'jump' | 'exponential' | 'ternary';
 type SearchStatus = 'idle' | 'running' | 'paused' | 'found' | 'not-found';
 
 interface ArrayElement {
   value: number;
-  state: 'default' | 'checking' | 'eliminated' | 'found' | 'in-range';
+  state: 'default' | 'checking' | 'eliminated' | 'found' | 'in-range' | 'jumping';
 }
+
+const algorithmInfo: Record<SearchAlgorithm, { name: string; time: string; space: string; sorted: boolean }> = {
+  linear: { name: 'Linear Search', time: 'O(n)', space: 'O(1)', sorted: false },
+  binary: { name: 'Binary Search', time: 'O(log n)', space: 'O(1)', sorted: true },
+  jump: { name: 'Jump Search', time: 'O(√n)', space: 'O(1)', sorted: true },
+  exponential: { name: 'Exponential Search', time: 'O(log n)', space: 'O(1)', sorted: true },
+  ternary: { name: 'Ternary Search', time: 'O(log₃ n)', space: 'O(1)', sorted: true },
+};
 
 function generateSortedArray(size: number): number[] {
   const arr: number[] = [];
@@ -48,7 +59,8 @@ export default function SearchingVisualizer() {
   const rawArrayRef = useRef<number[]>([]);
 
   const generateArray = useCallback(() => {
-    const newArray = algorithm === 'binary' 
+    const needsSorted = algorithmInfo[algorithm].sorted;
+    const newArray = needsSorted 
       ? generateSortedArray(arraySize)
       : generateRandomArray(arraySize);
     rawArrayRef.current = newArray;
@@ -77,6 +89,9 @@ export default function SearchingVisualizer() {
         }
         if (step.type === 'check' && idx === step.index) {
           return { ...el, state: 'checking' as const };
+        }
+        if (step.type === 'jump' && idx === step.index) {
+          return { ...el, state: 'jumping' as const };
         }
         if (step.type === 'eliminate') {
           if (step.low !== undefined && step.high !== undefined) {
@@ -135,9 +150,22 @@ export default function SearchingVisualizer() {
     setComparisons(0);
 
     const arr = rawArrayRef.current;
-    generatorRef.current = algorithm === 'binary'
-      ? binarySearch(arr, targetNum)
-      : linearSearch(arr, targetNum);
+    switch (algorithm) {
+      case 'binary':
+        generatorRef.current = binarySearch(arr, targetNum);
+        break;
+      case 'jump':
+        generatorRef.current = jumpSearch(arr, targetNum);
+        break;
+      case 'exponential':
+        generatorRef.current = exponentialSearch(arr, targetNum);
+        break;
+      case 'ternary':
+        generatorRef.current = ternarySearch(arr, targetNum);
+        break;
+      default:
+        generatorRef.current = linearSearch(arr, targetNum);
+    }
     
     isPausedRef.current = false;
     setStatus('running');
@@ -188,6 +216,8 @@ export default function SearchingVisualizer() {
         return 'bg-muted/30 text-muted-foreground opacity-40';
       case 'in-range':
         return 'bg-secondary/50 text-secondary-foreground';
+      case 'jumping':
+        return 'bg-accent text-accent-foreground scale-105';
       default:
         return 'bg-secondary text-secondary-foreground';
     }
@@ -195,6 +225,7 @@ export default function SearchingVisualizer() {
 
   const isRunning = status === 'running';
   const isCompleted = status === 'found' || status === 'not-found';
+  const currentAlgoInfo = algorithmInfo[algorithm];
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4">
@@ -219,32 +250,27 @@ export default function SearchingVisualizer() {
           transition={{ delay: 0.1 }}
           className="glass-card rounded-xl p-6 mb-6"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Algorithm Selection */}
-            <div>
-              <label className="block text-sm font-medium mb-2 text-muted-foreground">
-                Algorithm
-              </label>
-              <div className="flex gap-2">
+          {/* Algorithm Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-3 text-muted-foreground">
+              Select Algorithm
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(algorithmInfo) as SearchAlgorithm[]).map((algo) => (
                 <Button
-                  variant={algorithm === 'linear' ? 'default' : 'outline'}
-                  onClick={() => setAlgorithm('linear')}
+                  key={algo}
+                  variant={algorithm === algo ? 'default' : 'outline'}
+                  onClick={() => setAlgorithm(algo)}
                   disabled={isRunning}
-                  className="flex-1"
+                  size="sm"
                 >
-                  Linear
+                  {algorithmInfo[algo].name}
                 </Button>
-                <Button
-                  variant={algorithm === 'binary' ? 'default' : 'outline'}
-                  onClick={() => setAlgorithm('binary')}
-                  disabled={isRunning}
-                  className="flex-1"
-                >
-                  Binary
-                </Button>
-              </div>
+              ))}
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Target Input */}
             <div>
               <label className="block text-sm font-medium mb-2 text-muted-foreground">
@@ -288,15 +314,21 @@ export default function SearchingVisualizer() {
                 step={10}
               />
             </div>
+
+            {/* Array Size Change */}
+            <div>
+              <label className="block text-sm font-medium mb-2 text-muted-foreground">
+                &nbsp;
+              </label>
+              <Button onClick={generateArray} disabled={isRunning} variant="outline" className="w-full">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                New Array
+              </Button>
+            </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 mt-6">
-            <Button onClick={generateArray} disabled={isRunning} variant="outline">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              New Array
-            </Button>
-
             {status === 'idle' && (
               <Button onClick={handleSearch} className="control-btn-primary">
                 <Search className="w-4 h-4 mr-2" />
@@ -389,6 +421,10 @@ export default function SearchingVisualizer() {
                 <span className="text-muted-foreground">Found</span>
               </div>
               <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-accent rounded" />
+                <span className="text-muted-foreground">Jumping</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-muted/30 rounded" />
                 <span className="text-muted-foreground">Eliminated</span>
               </div>
@@ -397,7 +433,7 @@ export default function SearchingVisualizer() {
 
           {/* Stats & Info */}
           <div className="glass-card rounded-xl p-6">
-            <h3 className="font-semibold mb-4">Algorithm Info</h3>
+            <h3 className="font-semibold mb-4">{currentAlgoInfo.name}</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Comparisons:</span>
@@ -405,17 +441,15 @@ export default function SearchingVisualizer() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Time Complexity:</span>
-                <span className="font-mono text-primary">
-                  {algorithm === 'binary' ? 'O(log n)' : 'O(n)'}
-                </span>
+                <span className="font-mono text-primary">{currentAlgoInfo.time}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Space Complexity:</span>
-                <span className="font-mono text-primary">O(1)</span>
+                <span className="font-mono text-primary">{currentAlgoInfo.space}</span>
               </div>
-              {algorithm === 'binary' && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Note: Binary search requires a sorted array
+              {currentAlgoInfo.sorted && (
+                <p className="text-xs text-muted-foreground mt-2 p-2 bg-muted/30 rounded">
+                  ⚠️ This algorithm requires a sorted array
                 </p>
               )}
             </div>
