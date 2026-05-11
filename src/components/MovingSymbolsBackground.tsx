@@ -47,7 +47,7 @@ export function MovingSymbolsBackground() {
       text: SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      size: Math.random() * 16 + 12,
+      size: Math.random() * 20 + 18,
       speedX: (Math.random() - 0.5) * 0.4,
       speedY: (Math.random() - 0.5) * 0.3 - 0.1,
       opacity: Math.random() * 0.15 + 0.05,
