@@ -1,10 +1,26 @@
 import { useEffect, useRef } from 'react';
 
 const SYMBOLS = [
-  '{ }', '[ ]', '( )', '</>', '01', '10', '+', '-', '*', '=', '→', '∞',
-  '○', '□', '△', '✓', '&', '|', '^', '%', '#', '?', '~', '≈', '≤', '≥',
-  '∑', '∏', '∫', '√', 'λ', 'α', 'β', 'π', 'θ', 'Ω', '∆', '∇',
-  '0', '1', 'a', 'b', 'x', 'y', 'n', 'i', 'j', 'k'
+  // Arrays & Lists
+  '[0]', '[i]', '[n]', 'A[ ]', 'arr[]', 'mid', 'lo', 'hi',
+  // Pointers & References
+  '→', 'null', 'head', 'tail', 'next', 'prev', '*ptr',
+  // Trees
+  'root', 'leaf', 'BST', 'AVL', 'parent', 'child', 'depth', 'level',
+  // Graphs
+  'V', 'E', 'adj', 'edge', 'path', 'src', 'dest', 'wt',
+  // Big-O & Complexity
+  'O(n)', 'O(log n)', 'O(n²)', 'Ω', 'Θ',
+  // Sorting
+  'swap', 'pivot', 'heap', 'merge', 'part', 'key',
+  // Stack & Queue
+  'push', 'pop', 'peek', 'FIFO', 'LIFO', 'rear', 'front',
+  // Hashing
+  'hash', 'key', 'val', 'mod', 'coll',
+  // Recursion & DP
+  'f(n)', 'dp[i]', 'memo', 'base', 'call',
+  // General
+  '{ }', '( )', '< >', '==', '≠', '≤', '≥', '&&', '||',
 ];
 
 interface FloatingSymbol {
