@@ -26,6 +26,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <div className="min-h-screen bg-background">
+            <MovingSymbolsBackground />
             <Navbar />
             <Routes>
               <Route path="/" element={<Index />} />
