@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navbar } from "@/components/Navbar";
+import { MovingSymbolsBackground } from "@/components/MovingSymbolsBackground";
 import Index from "./pages/Index";
 import SortingVisualizer from "./pages/SortingVisualizer";
 import SearchingVisualizer from "./pages/SearchingVisualizer";
@@ -25,6 +26,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <div className="min-h-screen bg-background">
+            <MovingSymbolsBackground />
             <Navbar />
             <Routes>
               <Route path="/" element={<Index />} />
